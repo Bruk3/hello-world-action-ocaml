@@ -15,15 +15,22 @@ jobs:
           - windows-latest
         ocaml-version:
           - 4.11.0
-          - 4.10.1
-          - 4.09.1
-          - 4.08.1
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Retrieve opam cache
+        uses: actions/cache@v2
+        if: runner.os != 'Windows'
+        id: cache-opam
+        with:
+          path: ~/.opam
+          key: v1-${{ runner.os }}-opam-${{ matrix.ocaml-version }}-${{ hashFiles('hello.opam.locked') }}
+          restore-keys: |
+            v1-${{ runner.os }}-opam-${{ matrix.ocaml-version }}-
 
       - name: Use OCaml ${{ matrix.ocaml-version }}
         uses: avsm/setup-ocaml@v1
@@ -34,7 +41,11 @@ jobs:
 
       - run: opam depext hello --yes --with-doc --with-test
 
-      - run: opam install . --deps-only --with-doc --with-test
+      - run: opam install . --deps-only --with-doc --with-test --locked
+        if: steps.cache-opam.outputs.cache-hit != 'true'
+
+      - run: opam upgrade --fixup
+        if: steps.cache-opam.outputs.cache-hit == 'true'
 
       - run: opam exec -- dune build
 
