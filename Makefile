@@ -1,8 +1,8 @@
 wordcount.ml: wordcount.mll
-	ocamllex wordcount.mll
+	opam exec -- ocamllex wordcount.mll
 
 wordcount: wordcount.ml
-	ocamlc -o wordcount wordcount.ml
+	opam exec -- ocamlc -o wordcount wordcount.ml
 
 wordcount.out: wordcount Makefile
 	./wordcount < Makefile > wordcount.out
